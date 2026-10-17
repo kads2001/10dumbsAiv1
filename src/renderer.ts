@@ -63,12 +63,10 @@ const BROW_SMOOTHING_MS = 45;
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
-// Face close-up (metres): the whole head and the neck, with the arms and hands out of shot. On Rocketbox avatars
-// the frame ends ~0.25 m below the eyes (shoulder joints ~0.23 m, forearms ~0.4 m, hands ~0.55 m below) and
-// ~0.17 m above them (top of the hair). On narrow containers the width limit keeps the whole head in.
-const FRAME_HEIGHT_M = 0.42;
-const MIN_FRAME_WIDTH_M = 0.3;
-const FACE_Y_IN_FRAME = 0.52; // face centre (eyes to chin), from the top
+// Face close-up (metres): chest-up executive portrait framing showing head, shoulders, black suit and tie cleanly.
+const FRAME_HEIGHT_M = 0.47;
+const MIN_FRAME_WIDTH_M = 0.32;
+const FACE_Y_IN_FRAME = 0.45; // face centre (eyes to chin), positioned for executive portrait balance
 
 /** Centre of the face: vertices moved by blink/jaw morphs, else the head bone, else near the top of the model. */
 function faceCenter(root: THREE.Object3D, meshes: THREE.Mesh[], targets: (name: string) => string[]): THREE.Vector3 {
@@ -102,9 +100,9 @@ function refineMaterial(mesh: THREE.Mesh, source: THREE.Material): THREE.Materia
   const material = new THREE.MeshPhysicalMaterial();
   if (source instanceof THREE.MeshPhysicalMaterial) material.copy(source);
   else THREE.MeshStandardMaterial.prototype.copy.call(material, source);
-  material.metalness = 0;
-  material.roughness = 0.82;
-  material.specularIntensity = 0.45;
+  material.metalness = 0.02;
+  material.roughness = 0.65;
+  material.specularIntensity = 0.48;
   if (source.name.endsWith("_head")) {
     // Skin, hair, teeth and eyes share one texture atlas, so tell them apart by geometry: eyeballs are weighted
     // to eye bones, and the face has nonzero blink deltas.
@@ -131,11 +129,18 @@ function refineMaterial(mesh: THREE.Mesh, source: THREE.Material): THREE.Materia
         skin = Math.abs(blink.getX(i)) + Math.abs(blink.getY(i)) + Math.abs(blink.getZ(i)) > 1e-4;
       }
     }
-    material.roughness = eye ? 0.22 : skin ? 0.62 : 0.72;
-    material.specularIntensity = eye ? 0.6 : 0.35;
-    material.clearcoat = eye ? 0.25 : 0;
-    material.clearcoatRoughness = 0.12;
+    // Realistic skin, eyes, and hair PBR response
+    material.roughness = eye ? 0.12 : skin ? 0.49 : 0.68;
+    material.specularIntensity = eye ? 0.85 : skin ? 0.56 : 0.40;
+    material.clearcoat = eye ? 0.65 : skin ? 0.08 : 0;
+    material.clearcoatRoughness = eye ? 0.06 : 0.30;
     if (eye) material.normalScale.multiplyScalar(0.2);
+  } else if (source.name.endsWith("_body")) {
+    // Suit fabric, collar, and silk red tie
+    material.roughness = 0.62;
+    material.specularIntensity = 0.52;
+    material.clearcoat = 0.06;
+    material.clearcoatRoughness = 0.25;
   }
   return material;
 }
@@ -159,8 +164,10 @@ export class AvatarRenderer {
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.PerspectiveCamera(22, 1, 0.1, 10);
   private readonly pmrem: THREE.PMREMGenerator;
-  private readonly keyLight = new THREE.RectAreaLight(0xfff3e8, 4, 0.8, 1.1);
-  private readonly fillLight = new THREE.RectAreaLight(0xe5efff, 1, 1.2, 1.5);
+  private readonly keyLight = new THREE.RectAreaLight(0xfff6ed, 4.2, 0.9, 1.2);
+  private readonly fillLight = new THREE.RectAreaLight(0xecf4ff, 1.5, 1.3, 1.6);
+  private readonly rimLight = new THREE.DirectionalLight(0xfffaed, 2.4);
+  private readonly bounceLight = new THREE.DirectionalLight(0xfff5ea, 0.45);
   private readonly resizeObserver: ResizeObserver;
   private readonly clock = new THREE.Clock();
   private model: THREE.Object3D | null = null;
@@ -181,16 +188,16 @@ export class AvatarRenderer {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 0.95;
+    this.renderer.toneMappingExposure = 1.06;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     Object.assign(this.renderer.domElement.style, { display: "block", width: "100%", height: "100%" });
     container.appendChild(this.renderer.domElement);
 
     this.pmrem = new THREE.PMREMGenerator(this.renderer);
     this.scene.environment = this.pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environmentIntensity = 0.35; // avoid washing out facial shape with light from every direction
+    this.scene.environmentIntensity = 0.50; // crisp studio clarity without washing out facial features
     RectAreaLightUniformsLib.init();
-    this.scene.add(this.keyLight, this.fillLight);
+    this.scene.add(this.keyLight, this.fillLight, this.rimLight, this.rimLight.target, this.bounceLight, this.bounceLight.target);
 
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
@@ -246,6 +253,12 @@ export class AvatarRenderer {
         this.keyLight.lookAt(this.face);
         this.fillLight.position.copy(this.face).add(new THREE.Vector3(0.9, 0.15, 1));
         this.fillLight.lookAt(this.face);
+        // Studio rim backlight for silhouette depth and hair edge lighting
+        this.rimLight.position.copy(this.face).add(new THREE.Vector3(0.6, 0.7, -1.2));
+        this.rimLight.target.position.copy(this.face);
+        // Soft under-chin bounce
+        this.bounceLight.position.copy(this.face).add(new THREE.Vector3(0, -0.9, 0.6));
+        this.bounceLight.target.position.copy(this.face);
         this.frameFace();
         resolve();
       }, undefined, (error) => {
@@ -273,6 +286,15 @@ export class AvatarRenderer {
     const { visemes, mode } = this.getFrame();
     this.applyMouth(visemes, dtMs);
     this.applyBlinkAndBrows(mode, dtMs);
+
+    // Natural lifelike micro-motion: breathing & subtle executive posture sway
+    if (this.model) {
+      const t = this.clock.elapsedTime;
+      this.model.position.y = Math.sin(t * 1.45) * 0.0016;
+      this.model.rotation.y = Math.sin(t * 0.65) * 0.0035;
+      this.model.rotation.x = Math.sin(t * 0.95) * 0.0015;
+    }
+
     this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame(this.tick);
   };

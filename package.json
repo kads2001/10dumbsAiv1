@@ -51,7 +51,8 @@
     "voice-agent"
   ],
   "scripts": {
-    "build": "rm -rf dist && vite build && tsc -p tsconfig.build.json && cp model/viseme-model.bin dist/",
+    "dev": "vite",
+    "build": "node scripts/build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test test/*.test.ts",
     "prepublishOnly": "npm run typecheck && npm test && npm run build"
