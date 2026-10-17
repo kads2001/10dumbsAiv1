@@ -42,22 +42,31 @@ function ttsPlugin(): Plugin {
   };
 }
 
-// Library build: ESM entry points; three and react stay peer dependencies.
+const isLib = Boolean(process.env.BUILD_LIB);
+
+// Web App build (default for Vercel/production) or Library build (if BUILD_LIB=1)
 export default defineConfig({
   define: { __VERSION__: JSON.stringify(version) },
   plugins: [ttsPlugin()],
-  build: {
-    lib: {
-      entry: { index: "src/index.ts", react: "src/react.tsx", server: "src/server.ts", live: "src/live.ts" },
-      formats: ["es"],
-    },
-    rollupOptions: {
-      external: [/^three($|\/)/, "react", "react/jsx-runtime", "react-dom"],
-    },
-    sourcemap: true,
-    target: "es2022",
-  },
+  build: isLib
+    ? {
+        lib: {
+          entry: { index: "src/index.ts", react: "src/react.tsx", server: "src/server.ts", live: "src/live.ts" },
+          formats: ["es"],
+        },
+        rollupOptions: {
+          external: [/^three($|\/)/, "react", "react/jsx-runtime", "react-dom"],
+        },
+        sourcemap: true,
+        target: "es2022",
+      }
+    : {
+        outDir: "dist",
+        sourcemap: true,
+        target: "es2022",
+      },
   server: {
     cors: true,
   },
 });
+

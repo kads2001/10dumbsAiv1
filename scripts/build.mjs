@@ -6,7 +6,12 @@ if (existsSync("dist")) {
 }
 
 execSync("npx vite build", { stdio: "inherit" });
-execSync("npx tsc -p tsconfig.build.json", { stdio: "inherit" });
+if (process.env.BUILD_LIB) {
+  execSync("npx tsc -p tsconfig.build.json", { stdio: "inherit" });
+}
 
-copyFileSync("model/viseme-model.bin", "dist/viseme-model.bin");
+if (existsSync("model/viseme-model.bin")) {
+  copyFileSync("model/viseme-model.bin", "dist/viseme-model.bin");
+}
 console.log("✓ Build complete with viseme model copied.");
+
