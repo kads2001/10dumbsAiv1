@@ -34,9 +34,12 @@
     body {
       width: 100%;
       height: 100%;
+      height: 100dvh;
       overflow: hidden;
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f1f5f9;
+      background-color: #0f172a;
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
     }
 
     /* Fullscreen Avatar Stage */
@@ -44,7 +47,8 @@
       position: fixed;
       inset: 0;
       width: 100vw;
-      height: 100vh;
+      height: 100%;
+      height: 100dvh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -83,8 +87,8 @@
     /* Floating 10 DUMBS INC. Brand Logo (Top-Left) */
     .brand-top-left {
       position: absolute;
-      top: 22px;
-      left: 28px;
+      top: max(18px, env(safe-area-inset-top, 18px));
+      left: max(20px, env(safe-area-inset-left, 20px));
       z-index: 25;
       display: flex;
       align-items: center;
@@ -95,9 +99,10 @@
 
     .brand-logo-img {
       height: 38px;
+      max-width: 220px;
       width: auto;
       object-fit: contain;
-      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.15));
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.25));
       transition: transform 0.2s ease;
     }
 
@@ -214,8 +219,9 @@
       z-index: 25;
       width: 100%;
       max-width: 620px;
-      margin-bottom: 2rem;
-      padding: 0 1rem;
+      margin-bottom: max(1.8rem, env(safe-area-inset-bottom, 1.8rem));
+      padding-left: max(1rem, env(safe-area-inset-left, 1rem));
+      padding-right: max(1rem, env(safe-area-inset-right, 1rem));
     }
 
     .pill-wrapper {
@@ -387,6 +393,8 @@
       position: relative;
       z-index: 20;
       box-shadow: 0 2px 8px rgba(16, 185, 129, 0.12);
+      max-width: min(92vw, 580px);
+      text-align: center;
     }
 
     .handsfree-indicator.active {
@@ -438,6 +446,188 @@
       border-color: #93c5fd;
       color: var(--brand-blue);
       transform: translateY(-1px);
+    }
+
+    /* ========================================================
+       RESPONSIVE DESIGN BREAKPOINTS (Tablets, Mobiles, Ultra-narrow)
+       ======================================================== */
+    @media (max-width: 768px) {
+      .bottom-dock {
+        max-width: 520px;
+        margin-bottom: max(1.2rem, env(safe-area-inset-bottom, 1.2rem));
+      }
+
+      .caption-container {
+        max-width: 520px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .brand-top-left {
+        top: max(12px, env(safe-area-inset-top, 12px));
+        left: max(14px, env(safe-area-inset-left, 14px));
+      }
+
+      .brand-logo-img {
+        height: 28px;
+        max-width: 150px;
+      }
+
+      .loading-title {
+        font-size: 0.95rem;
+        text-align: center;
+        padding: 0 1rem;
+      }
+
+      .caption-container {
+        padding: 0 0.75rem;
+        margin-bottom: 0.45rem;
+      }
+
+      .caption-card {
+        padding: 10px 14px;
+        border-radius: 14px;
+        gap: 10px;
+      }
+
+      .caption-avatar-icon {
+        width: 28px;
+        height: 28px;
+      }
+
+      .caption-label {
+        font-size: 0.68rem;
+      }
+
+      .caption-content {
+        font-size: 0.82rem;
+        line-height: 1.4;
+        max-height: 20vh;
+      }
+
+      .handsfree-indicator {
+        font-size: 0.68rem;
+        padding: 4px 12px;
+        margin-bottom: 0.35rem;
+      }
+
+      .bottom-dock {
+        padding-left: max(0.6rem, env(safe-area-inset-left, 0.6rem));
+        padding-right: max(0.6rem, env(safe-area-inset-right, 0.6rem));
+        margin-bottom: max(0.9rem, env(safe-area-inset-bottom, 0.9rem));
+      }
+
+      .pill-wrapper {
+        padding: 5px 6px;
+        gap: 6px;
+      }
+
+      .mic-circle-btn {
+        width: 38px;
+        height: 38px;
+      }
+
+      .mic-circle-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .pill-input {
+        font-size: 16px; /* Prevents auto-zoom in iOS Safari */
+        padding: 4px 6px;
+        min-width: 0;
+      }
+
+      .pill-input::placeholder {
+        font-size: 0.78rem;
+        text-overflow: ellipsis;
+      }
+
+      .ask-btn {
+        padding: 6px 14px;
+        font-size: 0.78rem;
+      }
+
+      .lang-pill-btn {
+        padding: 5px 8px;
+        font-size: 0.72rem;
+      }
+
+      .stop-speech-btn {
+        padding: 5px 10px;
+        font-size: 0.72rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .brand-logo-img {
+        height: 24px;
+        max-width: 125px;
+      }
+
+      .pill-wrapper {
+        padding: 4px 5px;
+        gap: 4px;
+      }
+
+      .mic-circle-btn {
+        width: 36px;
+        height: 36px;
+      }
+
+      .ask-btn {
+        padding: 5px 10px;
+        font-size: 0.74rem;
+      }
+
+      .lang-pill-btn {
+        padding: 4px 6px;
+        font-size: 0.68rem;
+      }
+
+      .stop-speech-btn {
+        padding: 4px 8px;
+        font-size: 0.68rem;
+      }
+    }
+
+    @media (max-height: 520px) and (orientation: landscape) {
+      .brand-top-left {
+        top: 8px;
+        left: 12px;
+      }
+
+      .brand-logo-img {
+        height: 24px;
+      }
+
+      .caption-container {
+        margin-bottom: 0.35rem;
+        max-width: 560px;
+      }
+
+      .caption-card {
+        padding: 6px 12px;
+      }
+
+      .caption-content {
+        max-height: 60px;
+        font-size: 0.78rem;
+      }
+
+      .bottom-dock {
+        margin-bottom: 0.5rem;
+        max-width: 560px;
+      }
+
+      .pill-wrapper {
+        padding: 4px 6px;
+      }
+
+      .mic-circle-btn {
+        width: 34px;
+        height: 34px;
+      }
     }
   </style>
 </head>

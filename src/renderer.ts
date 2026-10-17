@@ -354,10 +354,14 @@ export class AvatarRenderer {
   private frameFace(): void {
     if (!this.face) return;
     const { camera, face } = this;
-    const height = Math.max(FRAME_HEIGHT_M, MIN_FRAME_WIDTH_M / camera.aspect);
+    const aspect = camera.aspect;
+    const isPortrait = aspect < 1.0;
+    const faceYInFrame = isPortrait ? 0.52 : FACE_Y_IN_FRAME;
+    const minWidth = isPortrait ? 0.36 : MIN_FRAME_WIDTH_M;
+    const height = Math.max(FRAME_HEIGHT_M, minWidth / aspect);
     const distance = height / 2 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    camera.position.set(face.x, face.y + 0.03, face.z + distance); // lens at eye level
-    camera.lookAt(face.x, face.y - (0.5 - FACE_Y_IN_FRAME) * height, face.z);
+    camera.position.set(face.x, face.y + (isPortrait ? 0.04 : 0.03), face.z + distance);
+    camera.lookAt(face.x, face.y - (0.5 - faceYInFrame) * height, face.z);
   }
 
   private resize(): void {
